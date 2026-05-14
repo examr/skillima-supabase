@@ -166,3 +166,14 @@ keys.json
 examples/**/package-lock.json
 examples/**/yarn.lock
 examples/**/pnpm-lock.yaml
+examples/product-sample-supabase-kt/.gradle/7.5/gc.properties
+examples/product-sample-supabase-kt/.gradle/7.5/checksums/checksums.lock
+examples/product-sample-supabase-kt/.gradle/7.5/checksums/md5-checksums.bin
+examples/product-sample-supabase-kt/.gradle/7.5/checksums/sha1-checksums.bin
+examples/product-sample-supabase-kt/.gradle/7.5/dependencies-accessors/dependencies-accessors.lock
+examples/product-sample-supabase-kt/.gradle/7.5/dependencies-accessors/gc.properties
+examples/product-sample-supabase-kt/.gradle/7.5/fileChanges/last-build.bin
+examples/product-sample-supabase-kt/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+examples/product-sample-supabase-kt/.gradle/7.5/fileHashes/fileHashes.lock
+examples/product-sample-supabase-kt/.gradle/buildOutputCleanup/cache.properties
+examples/product-sample-supabase-kt/.gradle/vcs-1/gc.properties

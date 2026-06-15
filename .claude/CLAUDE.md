@@ -4,6 +4,7 @@ pnpm 10 + Turborepo monorepo. Requires Node >= 22.
 
 ## Structure
 
+<<<<<<< HEAD
 | Directory           | Purpose                                                       |
 | ------------------- | ------------------------------------------------------------- |
 | `apps/studio`       | Supabase Studio/Dashboard — Next.js (pages router), React 18  |
@@ -16,6 +17,16 @@ pnpm 10 + Turborepo monorepo. Requires Node >= 22.
 | `packages/pg-meta`  | PostgreSQL metadata utilities                                 |
 | `packages/shared-data` | Shared static data/constants                              |
 | `e2e/studio`        | Playwright E2E tests for Studio                               |
+=======
+| Directory         | Purpose                                                      |
+| ----------------- | ------------------------------------------------------------ |
+| `apps/studio`     | Supabase Studio/Dashboard — Next.js (pages router), React 19 |
+| `apps/docs`       | Documentation site                                           |
+| `apps/www`        | Marketing website                                            |
+| `packages/ui`     | Shared UI components (shadcn/ui based)                       |
+| `packages/common` | Shared utilities and telemetry constants                     |
+| `e2e/studio`      | Playwright E2E tests for Studio                              |
+>>>>>>> upstream/master
 
 ## Common Commands
 
@@ -37,6 +48,7 @@ Next.js **pages router** (not app router). React 18, TypeScript strict mode.
 
 ### Directory Layout
 
+<<<<<<< HEAD
 ```
 apps/studio/
 ├── pages/                  # Next.js pages — route = file path
@@ -68,6 +80,11 @@ apps/studio/
 │   └── ...
 └── types/                  # Shared TypeScript types
 ```
+=======
+**Studio shortcuts** — when adding or changing repeated Studio UI actions, use the shared shortcut registry and primitives in `apps/studio/state/shortcuts/` and `apps/studio/components/ui/Shortcut*.tsx`. Prefer registered, discoverable shortcuts over one-off keyboard listeners; keep `G then ...` chords for navigation.
+
+## Studio
+>>>>>>> upstream/master
 
 ### TypeScript Path Aliases
 

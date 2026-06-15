@@ -16,7 +16,8 @@ import {
   Form,
   FormControl,
   FormField,
-  Input_Shadcn_,
+  Input,
+  Textarea,
 } from 'ui'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
@@ -145,7 +146,7 @@ export const EditSecretModal = () => {
                     render={({ field }) => (
                       <FormItemLayout name="name" label="Name">
                         <FormControl>
-                          <Input_Shadcn_ id="name" {...field} />
+                          <Input id="name" {...field} />
                         </FormControl>
                       </FormItemLayout>
                     )}
@@ -161,7 +162,7 @@ export const EditSecretModal = () => {
                         labelOptional="Optional"
                       >
                         <FormControl>
-                          <Input_Shadcn_ id="description" {...field} data-lpignore="true" />
+                          <Input id="description" {...field} data-lpignore="true" />
                         </FormControl>
                       </FormItemLayout>
                     )}
@@ -174,11 +175,30 @@ export const EditSecretModal = () => {
                       <FormItemLayout name="secret" label="Secret value">
                         <FormControl>
                           <div className="relative">
-                            <Input_Shadcn_
+                            <Textarea
                               id="secret"
-                              type={showSecretValue ? 'text' : 'password'}
                               {...field}
+                              rows={1}
+                              ref={(el) => {
+                                field.ref(el)
+                                if (el) {
+                                  el.style.height = 'auto'
+                                  el.style.height = Math.max(40, el.scrollHeight) + 'px'
+                                }
+                              }}
                               data-lpignore="true"
+                              className="min-h-0 resize-none"
+                              style={
+                                {
+                                  WebkitTextSecurity: showSecretValue ? undefined : 'disc',
+                                } as React.CSSProperties
+                              }
+                              onChange={(e) => {
+                                field.onChange(e)
+                                e.currentTarget.style.height = 'auto'
+                                e.currentTarget.style.height =
+                                  Math.max(40, e.currentTarget.scrollHeight) + 'px'
+                              }}
                             />
                             <Button
                               type="default"

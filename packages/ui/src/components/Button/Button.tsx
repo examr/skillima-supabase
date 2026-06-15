@@ -3,7 +3,7 @@
 import { cva, VariantProps } from 'class-variance-authority'
 import { Loader2 } from 'lucide-react'
 import { Slot } from 'radix-ui'
-import { cloneElement, forwardRef, isValidElement } from 'react'
+import { cloneElement, forwardRef, isValidElement, ReactNode } from 'react'
 
 import { SIZE_VARIANTS, SIZE_VARIANTS_DEFAULT } from '../../lib/constants'
 import { cn } from '../../lib/utils/cn'
@@ -13,8 +13,6 @@ const buttonVariants = cva(
   `relative
   flex items-center justify-center
   cursor-pointer
-  inline-flex
-  items-center
   space-x-2
   text-center
   font-regular
@@ -24,6 +22,7 @@ const buttonVariants = cva(
   outline-hidden
   transition-all
   outline-0
+  focus-visible:outline-solid
   focus-visible:outline-4
   focus-visible:outline-offset-1
   border
@@ -45,7 +44,7 @@ const buttonVariants = cva(
           text-foreground
           bg-alternative dark:bg-muted  hover:bg-selection
           border-strong hover:border-stronger
-          focus-visible:outline-brand-600
+          focus-visible:outline-border-strong
           data-[state=open]:bg-selection
           data-[state=open]:outline-brand-600
           data-[state=open]:border-button-hover
@@ -268,7 +267,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         }}
       >
         {asChild ? (
-          isValidElement(children) ? (
+          isValidElement<{ children: ReactNode }>(children) ? (
             cloneElement(
               children,
               undefined,

@@ -7,9 +7,9 @@ import {
   Badge,
   Button,
   cn,
-  Collapsible_Shadcn_,
-  CollapsibleContent_Shadcn_,
-  CollapsibleTrigger_Shadcn_,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   Separator,
 } from 'ui'
 import {
@@ -34,6 +34,7 @@ import { useContentQuery } from '@/data/content/content-query'
 import { useReplicationSourcesQuery } from '@/data/replication/sources-query'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { useShowMultigresLogs } from '@/hooks/misc/useShowMultigresLogs'
 
 export function SidebarCollapsible({
   children,
@@ -45,17 +46,17 @@ export function SidebarCollapsible({
   defaultOpen?: boolean
 }) {
   return (
-    <Collapsible_Shadcn_ defaultOpen={defaultOpen}>
-      <CollapsibleTrigger_Shadcn_ className="flex items-center gap-x-2 px-4 [&[data-state=open]>svg]:rotate-90! pb-2">
+    <Collapsible defaultOpen={defaultOpen}>
+      <CollapsibleTrigger className="flex items-center gap-x-2 px-4 [&[data-state=open]>svg]:rotate-90! pb-2">
         <ChevronRight
           size={16}
           className={'text-foreground-light transition-transform duration-200'}
         />
 
         <span className="text-foreground-light font-mono text-sm uppercase">{title}</span>
-      </CollapsibleTrigger_Shadcn_>
-      <CollapsibleContent_Shadcn_>{children}</CollapsibleContent_Shadcn_>
-    </Collapsible_Shadcn_>
+      </CollapsibleTrigger>
+      <CollapsibleContent>{children}</CollapsibleContent>
+    </Collapsible>
   )
 }
 
@@ -100,6 +101,7 @@ export function LogsSidebarMenuV2() {
   const showETLLogs = enablePgReplicate && (etlData?.sources?.length ?? 0) > 0 && !isETLLoading
 
   const { hasAccess: hasDedicatedPooler } = useCheckEntitlements('dedicated_pooler')
+  const showMultigresLogs = useShowMultigresLogs()
 
   const { data: savedQueriesRes, isPending: savedQueriesLoading } = useContentQuery({
     projectRef: ref,
@@ -190,6 +192,14 @@ export function LogsSidebarMenuV2() {
           name: 'Replication',
           key: 'replication_logs',
           url: `/project/${ref}/logs/replication-logs`,
+          items: [],
+        }
+      : null,
+    showMultigresLogs
+      ? {
+          name: 'Multigres',
+          key: 'multigres-logs',
+          url: `/project/${ref}/logs/multigres-logs`,
           items: [],
         }
       : null,
@@ -339,7 +349,9 @@ export function LogsSidebarMenuV2() {
           <InnerSideBarEmptyPanel
             className="mx-4"
             title="No queries created yet"
-            description="Create and save your queries to use them in the explorer"
+            description={
+              IS_PLATFORM ? 'Create and save your queries to use them in the explorer' : undefined
+            }
             actions={
               <Button asChild type="default">
                 <Link href={`/project/${ref}/logs/explorer`}>Create query</Link>

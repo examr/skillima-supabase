@@ -70,9 +70,9 @@ export const LogsExplorerPage: NextPageWithLayout = () => {
     else return TEMPLATES.filter((x) => x.label !== 'Metadata IP')
   }, [logsShowMetadataIpTemplate])
 
-  const editorRef = useRef<editor.IStandaloneCodeEditor>()
+  const editorRef = useRef<editor.IStandaloneCodeEditor>(null)
   const [editorId] = useState<string>(uuidv4())
-  const { timestampStart, timestampEnd, setTimeRange } = useLogsUrlState()
+  const { search, setSearch, timestampStart, timestampEnd, setTimeRange } = useLogsUrlState()
   const defaultHelper = useMemo(() => getDefaultHelper(EXPLORER_DATEPICKER_HELPERS), [])
   const initialDatePickerValue = useMemo<DatePickerValue>(() => {
     if (timestampStart && timestampEnd) {
@@ -203,9 +203,14 @@ export const LogsExplorerPage: NextPageWithLayout = () => {
   const handleRun = (value?: string | React.MouseEvent) => {
     track('log_explorer_query_run_button_clicked', { is_saved_query: !!queryId })
 
-    const query = typeof value === 'string' ? value || editorValue : editorValue
+    // Read the latest value straight from the editor instance rather than from
+    // `editorValue` state, which can lag behind the most recent keystroke. This
+    // keeps the Run button consistent with the Cmd+Enter keybinding.
+    const liveValue = editorRef.current?.getValue()
+    const query = typeof value === 'string' ? value || editorValue : (liveValue ?? editorValue)
     const resolvedParams = buildLogQueryParams(datePickerValue, query)
 
+    setSelectedLog(null)
     setParams((prev) => ({
       ...prev,
       sql: resolvedParams.sql,
@@ -217,15 +222,7 @@ export const LogsExplorerPage: NextPageWithLayout = () => {
     } else {
       setTimeRange('', '')
     }
-    const queryParams: Record<string, string | string[] | undefined> = { ...router.query, q: query }
-    if (datePickerValue.isHelper) {
-      delete queryParams.its
-      delete queryParams.ite
-    }
-    router.push({
-      pathname: router.pathname,
-      query: queryParams,
-    })
+    setSearch(query)
     addRecentLogSqlSnippet({ sql: query })
   }
 
@@ -318,6 +315,7 @@ export const LogsExplorerPage: NextPageWithLayout = () => {
     } else {
       setTimeRange(resolvedRange.from || '', resolvedRange.to || '')
     }
+    setSelectedLog(null)
     setParams((prev) => ({
       ...prev,
       iso_timestamp_start: resolvedRange.from,
@@ -326,10 +324,13 @@ export const LogsExplorerPage: NextPageWithLayout = () => {
   }
 
   useEffect(() => {
-    if (q) {
+    if (search) {
+      setEditorValue(search)
+    } else if (q) {
       setEditorValue(q)
+      setSearch(q)
     }
-  }, [q])
+  }, [q, search, setSearch])
 
   useEffect(() => {
     // prevents overwriting when the user selects a helper.

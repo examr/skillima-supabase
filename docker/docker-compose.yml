@@ -16,6 +16,8 @@ services:
     container_name: supabase-studio
     image: supabase/studio:2026.04.27-sha-5f60601
     restart: unless-stopped
+    ports:
+     - "3000:3000"
     healthcheck:
       test:
         [
@@ -436,8 +438,20 @@ services:
 
   functions:
     container_name: supabase-edge-functions
-    image: supabase/edge-runtime:v1.71.2
+    image: supabase/edge-runtime:v1.74.1_arm64
     restart: unless-stopped
+    ports:
+      - "9001:9000"
+    command:
+      [
+        "start",
+        "--main-service",
+        "/home/deno/functions/main",
+        "--policy",
+        "oneshot",
+        "--request-wait-timeout",
+        "300000"
+      ]
     volumes:
       - ./volumes/functions:/home/deno/functions:Z
       - deno-cache:/root/.cache/deno
@@ -458,12 +472,13 @@ services:
       SUPABASE_DB_URL: postgresql://postgres:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       # TODO: Allow configuring VERIFY_JWT per function.
       VERIFY_JWT: "${FUNCTIONS_VERIFY_JWT}"
-    command:
-      [
-        "start",
-        "--main-service",
-        "/home/deno/functions/main"
-      ]
+      GITHUB_APP_ID: "${GITHUB_APP_ID}"
+      GITHUB_APP_SLUG: "${GITHUB_APP_SLUG}"
+      GITHUB_APP_INSTALLATION_ID: "${GITHUB_APP_INSTALLATION_ID}"
+      GITHUB_ORG: "${GITHUB_ORG}"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET}"
+      EDGE_RUNTIME_WORKER_TIMEOUT_MS: "300000"
+      GITHUB_APP_PRIVATE_KEY: "${GITHUB_APP_PRIVATE_KEY}"
 
   analytics:
     container_name: supabase-analytics

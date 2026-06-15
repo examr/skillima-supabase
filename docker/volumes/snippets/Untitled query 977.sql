@@ -1,0 +1,2 @@
+ALTER TABLE projects
+DROP CONSTRAINT projects_mentor_id_fkey;

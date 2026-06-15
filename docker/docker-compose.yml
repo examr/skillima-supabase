@@ -2,7 +2,7 @@
 #   Start:              docker compose up -d
 #   Stop:               docker compose down
 #   Dev mode:           docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml up -d
-#   Reset everything:   sh reset.sh
+#   Reset everything:  ./reset.sh
 #
 # TODO:
 #   - Podman does not support nested variable interpolation (${A:-${B}})
@@ -16,6 +16,8 @@ services:
     container_name: supabase-studio
     image: supabase/studio:2026.06.03-sha-0bca601
     restart: unless-stopped
+    ports:
+     - "3000:3000"
     healthcheck:
       test:
         [
@@ -437,8 +439,20 @@ services:
 
   functions:
     container_name: supabase-edge-functions
-    image: supabase/edge-runtime:v1.74.0
+    image: supabase/edge-runtime:v1.74.1_arm64
     restart: unless-stopped
+    ports:
+      - "9001:9000"
+    command:
+      [
+        "start",
+        "--main-service",
+        "/home/deno/functions/main",
+        "--policy",
+        "oneshot",
+        "--request-wait-timeout",
+        "300000"
+      ]
     volumes:
       - ./volumes/functions:/home/deno/functions:z
       - deno-cache:/root/.cache/deno
@@ -464,12 +478,59 @@ services:
       SUPABASE_DB_URL: postgresql://postgres:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       # TODO: Allow configuring VERIFY_JWT per function.
       VERIFY_JWT: "${FUNCTIONS_VERIFY_JWT}"
-    command:
-      [
-        "start",
-        "--main-service",
-        "/home/deno/functions/main"
-      ]
+      GITHUB_APP_ID: "${GITHUB_APP_ID}"
+      GITHUB_APP_SLUG: "${GITHUB_APP_SLUG}"
+      GITHUB_APP_INSTALLATION_ID: "${GITHUB_APP_INSTALLATION_ID}"
+      GITHUB_ORG: "${GITHUB_ORG}"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET}"
+      EDGE_RUNTIME_WORKER_TIMEOUT_MS: "300000"
+      GITHUB_APP_PRIVATE_KEY: "${GITHUB_APP_PRIVATE_KEY}"
+
+  analytics:
+    container_name: supabase-analytics
+    image: supabase/logflare:1.36.1
+    restart: unless-stopped
+    # ports:
+    #   - 4000:4000
+    # Uncomment to use Big Query backend for analytics
+    # volumes:
+    #   - type: bind
+    #     source: ${PWD}/gcloud.json
+    #     target: /opt/app/rel/logflare/bin/gcloud.json
+    #     read_only: true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sSfL -o /dev/null http://localhost:4000/health"
+        ]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+    depends_on:
+      db:
+        # Disable this if you are using an external Postgres database
+        condition: service_healthy
+    environment:
+      LOGFLARE_NODE_HOST: 127.0.0.1
+      DB_USERNAME: supabase_admin
+      DB_DATABASE: _supabase
+      DB_HOSTNAME: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_SCHEMA: _analytics
+      LOGFLARE_PUBLIC_ACCESS_TOKEN: ${LOGFLARE_PUBLIC_ACCESS_TOKEN}
+      LOGFLARE_PRIVATE_ACCESS_TOKEN: ${LOGFLARE_PRIVATE_ACCESS_TOKEN}
+      LOGFLARE_SINGLE_TENANT: "true"
+      LOGFLARE_SUPABASE_MODE: "true"
+
+      # Comment variables to use Big Query backend for analytics
+      POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/_supabase
+      POSTGRES_BACKEND_SCHEMA: _analytics
+      LOGFLARE_FEATURE_FLAG_OVERRIDE: multibackend=true
+      # Uncomment to use Big Query backend for analytics
+      # GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID}
+      # GOOGLE_PROJECT_NUMBER: ${GOOGLE_PROJECT_NUMBER}
 
   # Comment out everything below this point if you are using an external Postgres database
   db:
@@ -525,6 +586,36 @@ services:
         "-c",
         "log_min_messages=fatal" # prevents Realtime polling queries from appearing in logs
       ]
+
+  vector:
+    container_name: supabase-vector
+    image: timberio/vector:0.53.0-alpine
+    restart: unless-stopped
+    volumes:
+      - ./volumes/logs/vector.yml:/etc/vector/vector.yml:ro,z
+      - ${DOCKER_SOCKET_LOCATION}:/var/run/docker.sock:ro,z
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://vector:9001/health"
+        ]
+      timeout: 5s
+      interval: 5s
+      retries: 3
+    environment:
+      LOGFLARE_PUBLIC_ACCESS_TOKEN: ${LOGFLARE_PUBLIC_ACCESS_TOKEN}
+    command:
+      [
+        "--config",
+        "/etc/vector/vector.yml"
+      ]
+    security_opt:
+      - "label=disable"
 
   # Update the DATABASE_URL if you are using an external Postgres database
   supavisor:

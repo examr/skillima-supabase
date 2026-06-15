@@ -1,0 +1,1 @@
+SELECT * FROM admin_totp WHERE user_id = '1e5fc727-66da-44aa-9610-30f5b034f09f';
